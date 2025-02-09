@@ -1,11 +1,13 @@
-import { Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { Controller, Inject, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { JwtRefreshAuthGuard } from './refresh.strategy/jwt-refresh-auth.guard';
+import { JwtRefreshAuthGuard } from '../guards/jwt-refresh-auth.guard';
+import { IAuthService } from '../../domain/services/auth.service.interface';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    @Inject('IAuthService') private readonly authService: IAuthService,
+  ) {}
 
   @Post('login')
   @UseGuards(AuthGuard('local'))
