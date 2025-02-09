@@ -3,9 +3,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { AuthGuard } from './modules/auth/local.strategy/auth.guard';
-import { TransformInterceptor } from './modules/interceptors/transform/transform.interceptor';
-import { HttpExceptionFilter } from './modules/interceptors/http-exception/http-exception.filter';
+import { AuthGuard } from './modules/auth/data/guards/auth.guard';
+import { TransformInterceptor } from './shared/interceptors/transform/transform.interceptor';
+import { HttpExceptionFilter } from './shared/filters/http-exception/http-exception.filter';
 
 @Module({
   imports: [AuthModule, UserModule, PrismaModule],

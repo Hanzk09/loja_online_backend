@@ -1,11 +1,10 @@
 import {
-  BadGatewayException,
   CallHandler,
   ExecutionContext,
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { catchError, map, Observable, throwError } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {

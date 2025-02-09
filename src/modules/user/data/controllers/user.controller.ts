@@ -9,16 +9,20 @@ import {
   Query,
   ParseIntPipe,
   UseGuards,
+  Inject,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { JwtAuthGuard } from '../auth/jwt.strategy/jwt-auth.guard';
+import { CreateUserDto } from '../../domain/models/dto/create-user.dto';
+import { User } from '../../domain/models/entities/user.entity';
+import { UpdateUserDto } from '../../domain/models/dto/update-user.dto';
+import { IUserController } from '../../domain/controllers/user.controller.interface';
+import { IUserService } from '../../domain/services/user.service.interface';
+import { JwtAuthGuard } from 'src/modules/auth/data/guards/jwt-auth.guard';
 
 @Controller('user')
-export class UserController {
-  constructor(private readonly userService: UserService) {}
+export class UserController implements IUserController {
+  constructor(
+    @Inject('IUserService') private readonly userService: IUserService,
+  ) {}
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {

@@ -1,25 +1,30 @@
 import {
   BadRequestException,
   HttpException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import { CreateUserDto } from '../../domain/models/dto/create-user.dto';
+import { UpdateUserDto } from '../../domain/models/dto/update-user.dto';
+import { User } from '../../domain/models/entities/user.entity';
 import * as bycrypt from 'bcrypt';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { IUserService } from '../../domain/services/user.service.interface';
+import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 
 @Injectable()
-export class UserService {
-  constructor(private readonly prismaService: PrismaService) {}
+export class UserService implements IUserService {
+  constructor(
+    @Inject('IUserRepository') private readonly userRepository: IUserRepository,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const userExists: User = await this.prismaService.user.findUnique({
-        where: { email: createUserDto.email },
-      });
+      const userExists: User = await this.userRepository.findByEmail(
+        createUserDto.email,
+      );
 
       if (userExists) {
         throw new BadRequestException('E-mail já cadastrado');
@@ -29,9 +34,7 @@ export class UserService {
         Number(process.env.BYCRYPT_SALT),
       );
 
-      const newUser: User = await this.prismaService.user.create({
-        data: createUserDto,
-      });
+      const newUser: User = await this.userRepository.create(createUserDto);
 
       return newUser;
     } catch (error) {
@@ -44,7 +47,7 @@ export class UserService {
 
   async findAll(take: number, skip: number): Promise<User[]> {
     try {
-      return await this.prismaService.user.findMany({ take: take, skip: skip });
+      return await this.userRepository.findMany(take, skip);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -55,9 +58,7 @@ export class UserService {
 
   async findById(id: number): Promise<User> {
     try {
-      const user = await this.prismaService.user.findUnique({
-        where: { id: id },
-      });
+      const user = await this.userRepository.findById(id);
       if (!user) {
         throw new NotFoundException('Usuário não encontrado!');
       }
@@ -72,9 +73,7 @@ export class UserService {
 
   async findByEmail(email: string): Promise<User> {
     try {
-      const user = await this.prismaService.user.findUnique({
-        where: { email: email },
-      });
+      const user = await this.userRepository.findByEmail(email);
       if (!user) {
         throw new NotFoundException('Usuário não encontrado!');
       }
@@ -90,10 +89,8 @@ export class UserService {
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
     try {
       const [userById, userByEmail] = await Promise.all([
-        this.prismaService.user.findUnique({ where: { id: id } }),
-        this.prismaService.user.findUnique({
-          where: { email: updateUserDto.email, AND: { id: { not: id } } },
-        }),
+        this.userRepository.findById(id),
+        this.userRepository.findByEmailAndIdNotIn(updateUserDto.email, id),
       ]);
       if (!userById) {
         throw new NotFoundException('Usuário não encontrado!');
@@ -109,10 +106,7 @@ export class UserService {
         );
       }
 
-      return await this.prismaService.user.update({
-        where: { id: id },
-        data: updateUserDto,
-      });
+      return await this.userRepository.update(id, updateUserDto);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -123,17 +117,13 @@ export class UserService {
 
   async remove(id: number): Promise<User> {
     try {
-      const userExists = await this.prismaService.user.findUnique({
-        where: { id: id },
-      });
+      const userExists = await this.userRepository.findById(id);
 
       if (!userExists) {
         throw new NotFoundException('Usuário não encontrado!');
       }
 
-      return await this.prismaService.user.delete({
-        where: { id: id },
-      });
+      return await this.userRepository.remove(id);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
